@@ -77,29 +77,49 @@ export default function AppointmentsList({
   children,
 }: Props) {
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+  const [doctor, setDoctor] = useState("all");
 
-  const filteredAppointments = useMemo(() => {
-    return appointments.filter((appointment) => {
-      const patient =
-        appointment.patients?.name?.toLowerCase() || "";
+	const filteredAppointments = useMemo(() => {
+	  return appointments.filter((appointment) => {
+		const patientName =
+		  appointment.patients?.name?.toLowerCase() ?? "";
 
-      const doctor =
-        appointment.doctors?.name?.toLowerCase() || "";
+		const doctorName =
+		  appointment.doctors?.name?.toLowerCase() ?? "";
 
-      return (
-        patient.includes(search.toLowerCase()) ||
-        doctor.includes(search.toLowerCase())
-      );
-    });
-  }, [appointments, search]);
+		const matchesSearch =
+		  patientName.includes(search.toLowerCase()) ||
+		  doctorName.includes(search.toLowerCase());
+
+		const matchesStatus =
+		  status === "all" ||
+		  appointment.status === status;
+
+		const matchesDoctor =
+		  doctor === "all" ||
+		  appointment.doctor_id === doctor;
+
+		return (
+		  matchesSearch &&
+		  matchesStatus &&
+		  matchesDoctor
+		);
+	  });
+	}, [appointments, search, status, doctor]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <AppointmentFilters
-          search={search}
-          onSearchChange={setSearch}
-        />
+		<AppointmentFilters
+		  search={search}
+		  onSearchChange={setSearch}
+		  status={status}
+		  onStatusChange={setStatus}
+		  doctor={doctor}
+		  onDoctorChange={setDoctor}
+		  doctors={doctors}
+		/>
 
         {children}
       </div>
