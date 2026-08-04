@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { Loader2, CalendarPlus } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
-import { CalendarDays } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -34,73 +33,109 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+
 const formSchema = z.object({
   patient_id: z.string().min(1, "Please select a patient."),
   doctor_id: z.string().min(1, "Please select a doctor."),
   appointment_date: z.string().min(1, "Please select a date."),
   appointment_time: z.string().min(1, "Please select a time."),
+
   status: z.enum([
     "Scheduled",
     "Confirmed",
     "Completed",
     "Cancelled",
   ]),
-  duration_minutes: z.coerce.number(),
+
+  duration_minutes: z.coerce
+    .number()
+    .min(5, "Duration must be at least 5 minutes"),
+
   notes: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+
+type FormInput = z.input<typeof formSchema>;
+type FormValues = z.output<typeof formSchema>;
+
 
 export default function AddAppointmentDialog() {
+
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [patients, setPatients] = useState<
-  { id: string; name: string }[]
-	>([]);
 
-	const [doctors, setDoctors] = useState<
-	  { id: string; name: string }[]
-	>([]);
+  const [patients, setPatients] = useState<
+    { id: string; name: string }[]
+  >([]);
+
+  const [doctors, setDoctors] = useState<
+    { id: string; name: string }[]
+  >([]);
+
 
   const router = useRouter();
   const supabase = createClient();
-  
-  useEffect(() => {
-  if (!open) return;
 
-  async function loadData() {
-    const [{ data: patients }, { data: doctors }] =
-      await Promise.all([
+
+  useEffect(() => {
+
+    if (!open) return;
+
+
+    async function loadData() {
+
+      const [
+        { data: patients },
+        { data: doctors },
+      ] = await Promise.all([
+
         supabase
           .from("patients")
           .select("id,name")
           .order("name"),
+
 
         supabase
           .from("doctors")
           .select("id,name")
           .eq("availability", "Available")
           .order("name"),
+
       ]);
 
-    setPatients(patients ?? []);
-    setDoctors(doctors ?? []);
-  }
 
-  loadData();
-}, [open, supabase]);
+      setPatients(patients ?? []);
+      setDoctors(doctors ?? []);
 
-  const form = useForm<FormValues>({
+    }
+
+
+    loadData();
+
+  }, [open, supabase]);
+
+
+
+  const form = useForm<FormInput, any, FormValues>({
+
     resolver: zodResolver(formSchema),
+
     defaultValues: {
+
       patient_id: "",
       doctor_id: "",
+
       appointment_date: "",
       appointment_time: "",
-	  duration_minutes: 30,
+
+      duration_minutes: 30,
+
       status: "Scheduled",
+
       notes: "",
+
     },
+
   });
 
 async function onSubmit(values: FormValues) {
