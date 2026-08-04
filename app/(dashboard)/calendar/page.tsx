@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import AppointmentCalendar from "@/components/calendar/appointment-calendar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Appointment } from "@/types/database";
 
 export default async function CalendarPage() {
   const supabase = await createClient();
@@ -17,38 +18,53 @@ export default async function CalendarPage() {
       status,
       notes,
       patients (
+        id,
         name
       ),
       doctors (
+        id,
         name
       )
     `)
     .order("appointment_date", { ascending: true })
     .order("appointment_time", { ascending: true });
 
+
   const { data: patients } = await supabase
     .from("patients")
     .select("id, name")
     .order("name");
+
 
   const { data: doctors } = await supabase
     .from("doctors")
     .select("id, name")
     .order("name");
 
+
   if (error) {
-    console.error(error);
+    console.error("Appointment fetch error:", error);
   }
 
-  const appointmentList = appointments ?? [];
+
+  // Convert Supabase relationship arrays into objects
+  const appointmentList: Appointment[] =
+    appointments?.map((appointment) => ({
+      ...appointment,
+      patients: appointment.patients?.[0] ?? null,
+      doctors: appointment.doctors?.[0] ?? null,
+    })) ?? [];
+
 
   const confirmed = appointmentList.filter(
-    (a) => a.status === "Confirmed"
+    (appointment) => appointment.status === "Confirmed"
   ).length;
 
+
   const scheduled = appointmentList.filter(
-    (a) => a.status === "Scheduled"
+    (appointment) => appointment.status === "Scheduled"
   ).length;
+
 
   return (
     <div className="space-y-8">
@@ -75,6 +91,7 @@ export default async function CalendarPage() {
 
       </div>
 
+
       {/* Statistics */}
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -95,6 +112,7 @@ export default async function CalendarPage() {
 
         </div>
 
+
         <div className="group rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 transition-all duration-300 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/10">
 
           <p className="text-sm font-medium text-zinc-400">
@@ -110,6 +128,7 @@ export default async function CalendarPage() {
           </p>
 
         </div>
+
 
         <div className="group rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 transition-all duration-300 hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/10">
 
@@ -129,6 +148,7 @@ export default async function CalendarPage() {
 
       </div>
 
+
       {/* Calendar */}
 
       <Card className="overflow-hidden border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950">
@@ -144,6 +164,7 @@ export default async function CalendarPage() {
         </CardContent>
 
       </Card>
+
 
     </div>
   );
