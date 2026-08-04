@@ -55,8 +55,7 @@ const formSchema = z.object({
 });
 
 
-type FormInput = z.input<typeof formSchema>;
-type FormValues = z.output<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema>;
 
 
 export default function AddAppointmentDialog() {
@@ -94,7 +93,6 @@ export default function AddAppointmentDialog() {
           .select("id,name")
           .order("name"),
 
-
         supabase
           .from("doctors")
           .select("id,name")
@@ -116,7 +114,7 @@ export default function AddAppointmentDialog() {
 
 
 
-  const form = useForm<FormInput, any, FormValues>({
+  const form = useForm<FormValues>({
 
     resolver: zodResolver(formSchema),
 
@@ -138,344 +136,537 @@ export default function AddAppointmentDialog() {
 
   });
 
-async function onSubmit(values: FormValues) {
-  try {
-    setIsSubmitting(true);
 
-    // Convert 10:30 -> 10:30:00 for PostgreSQL
-    const time =
-      values.appointment_time.length === 5
-        ? `${values.appointment_time}:00`
-        : values.appointment_time;
 
-    // Calculate appointment start/end
-    const start = new Date(
-      `${values.appointment_date}T${time}`
-    );
+  async function onSubmit(values: FormValues) {
 
-    const end = new Date(start);
-    end.setMinutes(
-      end.getMinutes() + values.duration_minutes
-    );
+    try {
 
-    // Get existing appointments for the same doctor/date
-    const {
-      data: existingAppointments,
-      error: fetchError,
-    } = await supabase
-      .from("appointments")
-      .select(
-        "id, appointment_time, duration_minutes"
-      )
-      .eq("doctor_id", values.doctor_id)
-      .eq(
-        "appointment_date",
-        values.appointment_date
+      setIsSubmitting(true);
+
+
+      const time =
+        values.appointment_time.length === 5
+          ? `${values.appointment_time}:00`
+          : values.appointment_time;
+
+
+      const start = new Date(
+        `${values.appointment_date}T${time}`
       );
 
-    if (fetchError) throw fetchError;
 
-    // Check for overlapping appointments
-    const hasConflict = existingAppointments?.some(
-      (appointment) => {
-        const existingStart = new Date(
-          `${values.appointment_date}T${appointment.appointment_time}`
+      const end = new Date(start);
+
+      end.setMinutes(
+        end.getMinutes() + values.duration_minutes
+      );
+
+
+      const {
+        data: existingAppointments,
+        error: fetchError,
+      } = await supabase
+        .from("appointments")
+        .select(
+          "id, appointment_time, duration_minutes"
+        )
+        .eq("doctor_id", values.doctor_id)
+        .eq(
+          "appointment_date",
+          values.appointment_date
         );
 
-        const existingEnd = new Date(existingStart);
-        existingEnd.setMinutes(
-          existingEnd.getMinutes() +
-            (appointment.duration_minutes ?? 30)
+
+      if (fetchError) throw fetchError;
+
+
+
+      const hasConflict =
+        existingAppointments?.some(
+          (appointment) => {
+
+            const existingStart = new Date(
+              `${values.appointment_date}T${appointment.appointment_time}`
+            );
+
+
+            const existingEnd = new Date(existingStart);
+
+
+            existingEnd.setMinutes(
+              existingEnd.getMinutes() +
+              (appointment.duration_minutes ?? 30)
+            );
+
+
+            return (
+              start < existingEnd &&
+              end > existingStart
+            );
+
+          }
         );
 
-        return (
-          start < existingEnd &&
-          end > existingStart
+
+      if (hasConflict) {
+
+        toast.error(
+          "This doctor already has an appointment during that time."
         );
+
+        return;
+
       }
-    );
 
-    if (hasConflict) {
-      toast.error(
-        "This doctor already has an appointment during that time."
+
+
+      const { error } = await supabase
+        .from("appointments")
+        .insert({
+
+          patient_id: values.patient_id,
+          doctor_id: values.doctor_id,
+          appointment_date: values.appointment_date,
+          appointment_time: time,
+          duration_minutes: values.duration_minutes,
+          status: values.status,
+          notes: values.notes,
+
+        });
+
+
+      if (error) throw error;
+
+
+      toast.success(
+        "Appointment created successfully."
       );
-      return;
+
+
+      form.reset();
+
+      setOpen(false);
+
+      router.refresh();
+
+
+    } catch (error) {
+
+      console.error(
+        "SUPABASE ERROR:",
+        error
+      );
+
+
+      toast.error(
+        "Failed to create appointment",
+        {
+          description:
+            error instanceof Error
+              ? error.message
+              : JSON.stringify(error),
+        }
+      );
+
+
+    } finally {
+
+      setIsSubmitting(false);
+
     }
 
-    // Save appointment
-    const { error } = await supabase
-      .from("appointments")
-      .insert({
-        patient_id: values.patient_id,
-        doctor_id: values.doctor_id,
-        appointment_date: values.appointment_date,
-        appointment_time: time,
-        duration_minutes: values.duration_minutes,
-        status: values.status,
-        notes: values.notes,
-      });
-
-    if (error) throw error;
-
-    toast.success(
-      "Appointment created successfully."
-    );
-
-    form.reset();
-    setOpen(false);
-    router.refresh();
-  } catch (error) {
-    console.error("SUPABASE ERROR:", error);
-
-    toast.error(
-      "Failed to create appointment",
-      {
-        description:
-          error instanceof Error
-            ? error.message
-            : JSON.stringify(error),
-      }
-    );
-  } finally {
-    setIsSubmitting(false);
   }
-}
+
+
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-		<DialogTrigger
-		  className="inline-flex h-12 items-center rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 text-white shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5 hover:shadow-indigo-500/40"
-		>
-		  <CalendarPlus className="mr-2 h-5 w-5" />
-		  New Appointment
-		</DialogTrigger>
+    <Dialog
+      open={open}
+      onOpenChange={setOpen}
+    >
 
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+      <DialogTrigger
+        className="inline-flex h-12 items-center rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 text-white shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5 hover:shadow-indigo-500/40"
+      >
+
+        <CalendarPlus className="mr-2 h-5 w-5" />
+
+        New Appointment
+
+      </DialogTrigger>
+
+
+      <DialogContent className="border-zinc-800 bg-zinc-900 text-white">
+
         <DialogHeader>
-          <DialogTitle>Schedule Appointment</DialogTitle>
+
+          <DialogTitle>
+            Schedule Appointment
+          </DialogTitle>
+
 
           <DialogDescription className="text-zinc-400">
+
             Create a new appointment.
+
           </DialogDescription>
+
         </DialogHeader>
 
+
+
         <Form {...form}>
+
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4"
           >
-            {/* Patient */}
+
+
             <FormField
               control={form.control}
               name="patient_id"
               render={({ field }) => (
+
                 <FormItem>
-                  <FormLabel>Patient</FormLabel>
+
+                  <FormLabel>
+                    Patient
+                  </FormLabel>
+
 
                   <FormControl>
+
                     <select
                       value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
+                      onChange={(e) =>
+                        field.onChange(e.target.value)
+                      }
                       className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2"
                     >
-                      <option value="">Select patient</option>
 
-                      {patients.length === 0 ? (
-					  <option disabled>Loading patients...</option>
-					) : (
-					  patients.map((patient) => (
+                      <option value="">
+                        Select patient
+                      </option>
+
+
+                      {patients.map((patient) => (
+
                         <option
                           key={patient.id}
                           value={patient.id}
                         >
+
                           {patient.name}
+
                         </option>
-                        ))
-						)}
+
+                      ))}
+
                     </select>
+
                   </FormControl>
 
+
                   <FormMessage />
+
                 </FormItem>
+
               )}
             />
 
-            {/* Doctor */}
+
+
             <FormField
               control={form.control}
               name="doctor_id"
               render={({ field }) => (
+
                 <FormItem>
-                  <FormLabel>Doctor</FormLabel>
+
+                  <FormLabel>
+                    Doctor
+                  </FormLabel>
+
 
                   <FormControl>
+
                     <select
                       value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
+                      onChange={(e) =>
+                        field.onChange(e.target.value)
+                      }
                       className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2"
                     >
-                      <option value="">Select doctor</option>
 
-                      {doctors.length === 0 ? (
-					  <option disabled>Loading doctors...</option>
-					) : (
-					  doctors.map((doctor) => (
+                      <option value="">
+                        Select doctor
+                      </option>
+
+
+                      {doctors.map((doctor) => (
+
                         <option
                           key={doctor.id}
                           value={doctor.id}
                         >
+
                           {doctor.name}
+
                         </option>
-                        ))
-					)}
+
+                      ))}
+
                     </select>
+
                   </FormControl>
 
+
                   <FormMessage />
+
                 </FormItem>
+
               )}
             />
 
-            {/* Date */}
+
+
             <FormField
               control={form.control}
               name="appointment_date"
               render={({ field }) => (
+
                 <FormItem>
-                  <FormLabel>Date</FormLabel>
+
+                  <FormLabel>
+                    Date
+                  </FormLabel>
+
 
                   <FormControl>
+
                     <Input
                       type="date"
                       {...field}
                     />
+
                   </FormControl>
 
+
                   <FormMessage />
+
                 </FormItem>
+
               )}
             />
 
-            {/* Time */}
+
+
             <FormField
               control={form.control}
               name="appointment_time"
               render={({ field }) => (
+
                 <FormItem>
-                  <FormLabel>Time</FormLabel>
+
+                  <FormLabel>
+                    Time
+                  </FormLabel>
+
 
                   <FormControl>
+
                     <Input
                       type="time"
                       step="60"
                       {...field}
                     />
+
                   </FormControl>
 
+
                   <FormMessage />
+
                 </FormItem>
+
               )}
             />
-			
-			{/* Duration */}
-			<FormField
-			  control={form.control}
-			  name="duration_minutes"
-			  render={({ field }) => (
-				<FormItem>
-				  <FormLabel>Duration</FormLabel>
 
-				  <FormControl>
-					<select
-					  value={field.value}
-					  onChange={(e) =>
-						field.onChange(Number(e.target.value))
-					  }
-					  className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2"
-					>
-					  <option value={15}>15 Minutes</option>
-					  <option value={30}>30 Minutes</option>
-					  <option value={45}>45 Minutes</option>
-					  <option value={60}>60 Minutes</option>
-					</select>
-				  </FormControl>
 
-				  <FormMessage />
-				</FormItem>
-			  )}
-			/>
 
-            {/* Status */}
+            <FormField
+              control={form.control}
+              name="duration_minutes"
+              render={({ field }) => (
+
+                <FormItem>
+
+                  <FormLabel>
+                    Duration
+                  </FormLabel>
+
+
+                  <FormControl>
+
+                    <select
+                      value={String(field.value ?? 30)}
+                      onChange={(e) =>
+                        field.onChange(
+                          Number(e.target.value)
+                        )
+                      }
+                      className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2"
+                    >
+
+                      <option value="15">
+                        15 Minutes
+                      </option>
+
+                      <option value="30">
+                        30 Minutes
+                      </option>
+
+                      <option value="45">
+                        45 Minutes
+                      </option>
+
+                      <option value="60">
+                        60 Minutes
+                      </option>
+
+                    </select>
+
+                  </FormControl>
+
+
+                  <FormMessage />
+
+                </FormItem>
+
+              )}
+            />
+
+
+
             <FormField
               control={form.control}
               name="status"
               render={({ field }) => (
+
                 <FormItem>
-                  <FormLabel>Status</FormLabel>
+
+                  <FormLabel>
+                    Status
+                  </FormLabel>
+
 
                   <FormControl>
+
                     <select
                       value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
+                      onChange={(e) =>
+                        field.onChange(e.target.value)
+                      }
                       className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2"
                     >
-                      <option value="Scheduled">Scheduled</option>
-                      <option value="Confirmed">Confirmed</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
+
+                      <option value="Scheduled">
+                        Scheduled
+                      </option>
+
+                      <option value="Confirmed">
+                        Confirmed
+                      </option>
+
+                      <option value="Completed">
+                        Completed
+                      </option>
+
+                      <option value="Cancelled">
+                        Cancelled
+                      </option>
+
                     </select>
+
                   </FormControl>
 
+
                   <FormMessage />
+
                 </FormItem>
+
               )}
             />
 
-            {/* Notes */}
+
+
             <FormField
               control={form.control}
               name="notes"
               render={({ field }) => (
+
                 <FormItem>
-                  <FormLabel>Notes</FormLabel>
+
+                  <FormLabel>
+                    Notes
+                  </FormLabel>
+
 
                   <FormControl>
+
                     <Textarea
                       placeholder="Optional notes..."
                       {...field}
                     />
+
                   </FormControl>
 
+
                   <FormMessage />
+
                 </FormItem>
+
               )}
             />
 
+
+
             <DialogFooter>
+
               <Button
                 type="button"
                 variant="outline"
-				className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
+                className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
                 onClick={() => setOpen(false)}
               >
                 Cancel
               </Button>
 
+
               <Button
                 type="submit"
-				className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500"
+                className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500"
                 disabled={isSubmitting}
               >
+
                 {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
 
                 Save Appointment
+
               </Button>
+
             </DialogFooter>
+
+
           </form>
+
         </Form>
+
       </DialogContent>
+
     </Dialog>
   );
 }
