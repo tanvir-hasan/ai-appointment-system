@@ -113,10 +113,7 @@ export default async function AppointmentsPage() {
 
 		  </div>
 
-		  <AddAppointmentDialog
-			patients={patients ?? []}
-			doctors={doctors ?? []}
-		  />
+		  <AddAppointmentDialog />
 
 		</div>
 		<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">

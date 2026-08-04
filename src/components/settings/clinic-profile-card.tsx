@@ -143,7 +143,7 @@ const inputClass =
 		  onChange={(e) => updateField("address", e.target.value)}
 		/>
 
-        <Button
+<Button
   onClick={saveSettings}
   disabled={isPending}
   className="
