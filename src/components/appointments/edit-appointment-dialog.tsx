@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 
@@ -18,7 +18,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 import {
@@ -30,6 +29,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+import type {
+  Appointment,
+  Patient,
+  Doctor,
+  AppointmentStatus,
+} from "@/types/database";
+
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -38,44 +44,34 @@ const formSchema = z.object({
   doctor_id: z.string().min(1, "Please select a doctor."),
   appointment_date: z.string().min(1, "Please select a date."),
   appointment_time: z.string().min(1, "Please select a time."),
-  status: z.enum([
-    "Scheduled",
-    "Confirmed",
-    "Completed",
-    "Cancelled",
-  ]),
+  duration_minutes: z.coerce.number(),
+	status: z.enum([
+	  "Scheduled",
+	  "Confirmed",
+	  "Completed",
+	  "Cancelled",
+	]) as z.ZodType<AppointmentStatus>,
   notes: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface EditAppointmentDialogProps {
-  appointment: {
-    id: string;
-    patient_id: string;
-    doctor_id: string;
-    appointment_date: string;
-    appointment_time: string;
-    status: "Scheduled" | "Confirmed" | "Completed" | "Cancelled";
-  };
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 
-  patients: {
-    id: string;
-    name: string;
-  }[];
-
-  doctors: {
-    id: string;
-    name: string;
-  }[];
+	appointment: Appointment;
+	patients: Patient[];
+	doctors: Doctor[];
 }
 
 export default function EditAppointmentDialog({
+  open,
+  onOpenChange,
   appointment,
   patients,
   doctors,
 }: EditAppointmentDialogProps) {
-  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const router = useRouter();
@@ -88,68 +84,113 @@ export default function EditAppointmentDialog({
 	  doctor_id: appointment.doctor_id,
 	  appointment_date: appointment.appointment_date,
 	  appointment_time: appointment.appointment_time,
+	  duration_minutes: appointment.duration_minutes,
 	  status: appointment.status,
 	},
   });
 
-  async function onSubmit(values: FormValues) {
-    try {
-      setIsSubmitting(true);
+async function onSubmit(values: FormValues) {
+  try {
+    setIsSubmitting(true);
 
-      // Convert 10:30 -> 10:30:00 for PostgreSQL
-      const time =
-        values.appointment_time.length === 5
-          ? `${values.appointment_time}:00`
-          : values.appointment_time;
+    // Convert 10:30 -> 10:30:00 for PostgreSQL
+    const time =
+      values.appointment_time.length === 5
+        ? `${values.appointment_time}:00`
+        : values.appointment_time;
 
-		const { error } = await supabase
-		  .from("appointments")
-		  .update({
-			patient_id: values.patient_id,
-			doctor_id: values.doctor_id,
-			appointment_date: values.appointment_date,
-			appointment_time: values.appointment_time,
-			status: values.status,
-		  })
-		  .eq("id", appointment.id);
+    // Calculate appointment start/end
+    const start = new Date(
+      `${values.appointment_date}T${time}`
+    );
 
-      if (error) {
-	  console.log("Supabase Error:", error);
-	  alert(JSON.stringify(error, null, 2));
-	  return;
-	}
+    const end = new Date(start);
+    end.setMinutes(
+      end.getMinutes() + values.duration_minutes
+    );
 
-      toast.success("Appointment updated successfully.");
+    // Get other appointments for this doctor on the same date
+    const {
+      data: existingAppointments,
+      error: fetchError,
+    } = await supabase
+      .from("appointments")
+      .select(
+        "id, appointment_time, duration_minutes"
+      )
+      .eq("doctor_id", values.doctor_id)
+      .eq(
+        "appointment_date",
+        values.appointment_date
+      )
+      .neq("id", appointment.id);
 
-      form.reset();
+    if (fetchError) throw fetchError;
 
-      setOpen(false);
+    // Check for overlapping appointments
+    const hasConflict = existingAppointments?.some(
+      (existing) => {
+        const existingStart = new Date(
+          `${values.appointment_date}T${existing.appointment_time}`
+        );
 
-      router.refresh();
-    } catch (error) {
-      console.error("SUPABASE ERROR:", error);
+        const existingEnd = new Date(existingStart);
+        existingEnd.setMinutes(
+          existingEnd.getMinutes() +
+            (existing.duration_minutes ?? 30)
+        );
 
-      toast.error("Failed to update appointment", {
-        description:
-          error instanceof Error
-            ? error.message
-            : JSON.stringify(error),
-      });
-    } finally {
-      setIsSubmitting(false);
+        return (
+          start < existingEnd &&
+          end > existingStart
+        );
+      }
+    );
+
+    if (hasConflict) {
+      toast.error(
+        "This doctor already has an appointment during that time."
+      );
+      return;
     }
+
+    // Update appointment
+    const { error } = await supabase
+      .from("appointments")
+      .update({
+        patient_id: values.patient_id,
+        doctor_id: values.doctor_id,
+        appointment_date: values.appointment_date,
+        appointment_time: time,
+        duration_minutes: values.duration_minutes,
+        status: values.status,
+        notes: values.notes,
+      })
+      .eq("id", appointment.id);
+
+    if (error) throw error;
+
+    toast.success("Appointment updated successfully.");
+
+    form.reset();
+    onOpenChange(false);
+    router.refresh();
+  } catch (error) {
+    console.error("SUPABASE ERROR:", error);
+
+    toast.error("Failed to update appointment", {
+      description:
+        error instanceof Error
+          ? error.message
+          : JSON.stringify(error),
+    });
+  } finally {
+    setIsSubmitting(false);
   }
+}
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-		<DialogTrigger asChild>
-		  <Button
-			variant="outline"
-			size="icon"
-		  >
-			<Pencil className="h-4 w-4" />
-		  </Button>
-		</DialogTrigger>
+    <Dialog open={open}  onOpenChange={onOpenChange}>
 
       <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
         <DialogHeader>
@@ -269,6 +310,34 @@ export default function EditAppointmentDialog({
                 </FormItem>
               )}
             />
+			
+			{/* Duration */}
+			<FormField
+			  control={form.control}
+			  name="duration_minutes"
+			  render={({ field }) => (
+				<FormItem>
+				  <FormLabel>Duration</FormLabel>
+
+				  <FormControl>
+					<select
+					  value={field.value}
+					  onChange={(e) =>
+						field.onChange(Number(e.target.value))
+					  }
+					  className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2"
+					>
+					  <option value={15}>15 Minutes</option>
+					  <option value={30}>30 Minutes</option>
+					  <option value={45}>45 Minutes</option>
+					  <option value={60}>60 Minutes</option>
+					</select>
+				  </FormControl>
+
+				  <FormMessage />
+				</FormItem>
+			  )}
+			/>
 
             {/* Status */}
             <FormField
@@ -320,13 +389,15 @@ export default function EditAppointmentDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+				className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
+                onClick={() => onOpenChange(false)}
               >
                 Cancel
               </Button>
 
               <Button
                 type="submit"
+				className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500"
                 disabled={isSubmitting}
               >
                 {isSubmitting && (

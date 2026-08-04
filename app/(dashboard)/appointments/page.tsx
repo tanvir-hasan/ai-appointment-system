@@ -95,22 +95,85 @@ export default async function AppointmentsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">
-            Appointments
-          </h1>
+		<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 
-          <p className="mt-2 text-zinc-400">
-            Manage and track patient appointments.
-          </p>
-        </div>
+		  <div>
 
-        <AddAppointmentDialog
-          patients={patients ?? []}
-          doctors={doctors ?? []}
-        />
-      </div>
+			<p className="text-sm font-semibold uppercase tracking-[0.3em] text-indigo-400">
+			  Appointment Management
+			</p>
+
+			<h1 className="mt-2 text-4xl font-bold tracking-tight">
+			  Appointments
+			</h1>
+
+			<p className="mt-3 max-w-2xl text-muted-foreground">
+			  Schedule, monitor and manage all patient appointments in one place.
+			</p>
+
+		  </div>
+
+		  <AddAppointmentDialog
+			patients={patients ?? []}
+			doctors={doctors ?? []}
+		  />
+
+		</div>
+		<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+		  <Card className="border border-white/10 bg-zinc-900 shadow-xl shadow-black/20">
+			<CardContent className="p-6">
+			  <p className="text-sm text-zinc-400">
+				Total Appointments
+			  </p>
+
+			  <h2 className="mt-3 text-4xl font-bold text-white">
+				{appointments?.length ?? 0}
+			  </h2>
+			</CardContent>
+		  </Card>
+
+		  <Card className="border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-zinc-900 shadow-xl shadow-black/20">
+			<CardContent className="p-6">
+			  <p className="text-sm text-zinc-400">
+				Confirmed
+			  </p>
+
+			  <h2 className="mt-3 text-4xl font-bold text-emerald-400">
+				{appointments?.filter(
+				  (a) => a.status === "Confirmed"
+				).length ?? 0}
+			  </h2>
+			</CardContent>
+		  </Card>
+
+		  <Card className="border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-zinc-900 shadow-xl shadow-black/20">
+			<CardContent className="p-6">
+			  <p className="text-sm text-zinc-400">
+				Scheduled
+			  </p>
+
+			  <h2 className="mt-3 text-4xl font-bold text-blue-400">
+				{appointments?.filter(
+				  (a) => a.status === "Scheduled"
+				).length ?? 0}
+			  </h2>
+			</CardContent>
+		  </Card>
+
+		  <Card className="border border-zinc-700 bg-zinc-900 shadow-xl shadow-black/20">
+			<CardContent className="p-6">
+			  <p className="text-sm text-zinc-400">
+				Completed
+			  </p>
+
+			  <h2 className="mt-3 text-4xl font-bold text-zinc-300">
+				{appointments?.filter(
+				  (a) => a.status === "Completed"
+				).length ?? 0}
+			  </h2>
+			</CardContent>
+		  </Card>
+		</div>
 
 		<AppointmentsList
 		  appointments={appointments ?? []}

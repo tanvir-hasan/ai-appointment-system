@@ -143,12 +143,14 @@ export function AddPatientDialog() {
       open={open}
       onOpenChange={setOpen}
     >
-      <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-500 text-white">
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Patient
-        </Button>
-      </DialogTrigger>
+		<DialogTrigger asChild>
+		  <Button
+			className="h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 font-medium text-white shadow-lg shadow-indigo-500/20 transition-all duration-300 hover:scale-[1.02] hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/40"
+		  >
+			<UserPlus className="mr-2 h-4 w-4" />
+			New Patient
+		  </Button>
+		</DialogTrigger>
 
       <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
         <DialogHeader>
@@ -277,6 +279,7 @@ export function AddPatientDialog() {
               <Button
                 type="button"
                 variant="outline"
+				className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
                 onClick={() => setOpen(false)}
               >
                 Cancel
@@ -284,6 +287,7 @@ export function AddPatientDialog() {
 
               <Button
                 type="submit"
+				className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500"
                 disabled={isSubmitting}
               >
                 {isSubmitting && (

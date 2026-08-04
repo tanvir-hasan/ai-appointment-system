@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Loader2, CalendarPlus } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { CalendarDays } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -44,32 +45,50 @@ const formSchema = z.object({
     "Completed",
     "Cancelled",
   ]),
+  duration_minutes: z.coerce.number(),
   notes: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface AddAppointmentDialogProps {
-  patients: {
-    id: string;
-    name: string;
-  }[];
-
-  doctors: {
-    id: string;
-    name: string;
-  }[];
-}
-
-export default function AddAppointmentDialog({
-  patients,
-  doctors,
-}: AddAppointmentDialogProps) {
+export default function AddAppointmentDialog() {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [patients, setPatients] = useState<
+  { id: string; name: string }[]
+	>([]);
+
+	const [doctors, setDoctors] = useState<
+	  { id: string; name: string }[]
+	>([]);
 
   const router = useRouter();
   const supabase = createClient();
+  
+  useEffect(() => {
+  if (!open) return;
+
+  async function loadData() {
+    const [{ data: patients }, { data: doctors }] =
+      await Promise.all([
+        supabase
+          .from("patients")
+          .select("id,name")
+          .order("name"),
+
+        supabase
+          .from("doctors")
+          .select("id,name")
+          .eq("availability", "Available")
+          .order("name"),
+      ]);
+
+    setPatients(patients ?? []);
+    setDoctors(doctors ?? []);
+  }
+
+  loadData();
+}, [open, supabase]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -78,65 +97,123 @@ export default function AddAppointmentDialog({
       doctor_id: "",
       appointment_date: "",
       appointment_time: "",
+	  duration_minutes: 30,
       status: "Scheduled",
       notes: "",
     },
   });
 
-  async function onSubmit(values: FormValues) {
-    try {
-      setIsSubmitting(true);
+async function onSubmit(values: FormValues) {
+  try {
+    setIsSubmitting(true);
 
-      // Convert 10:30 -> 10:30:00 for PostgreSQL
-      const time =
-        values.appointment_time.length === 5
-          ? `${values.appointment_time}:00`
-          : values.appointment_time;
+    // Convert 10:30 -> 10:30:00 for PostgreSQL
+    const time =
+      values.appointment_time.length === 5
+        ? `${values.appointment_time}:00`
+        : values.appointment_time;
 
-      const { error } = await supabase.from("appointments").insert({
+    // Calculate appointment start/end
+    const start = new Date(
+      `${values.appointment_date}T${time}`
+    );
+
+    const end = new Date(start);
+    end.setMinutes(
+      end.getMinutes() + values.duration_minutes
+    );
+
+    // Get existing appointments for the same doctor/date
+    const {
+      data: existingAppointments,
+      error: fetchError,
+    } = await supabase
+      .from("appointments")
+      .select(
+        "id, appointment_time, duration_minutes"
+      )
+      .eq("doctor_id", values.doctor_id)
+      .eq(
+        "appointment_date",
+        values.appointment_date
+      );
+
+    if (fetchError) throw fetchError;
+
+    // Check for overlapping appointments
+    const hasConflict = existingAppointments?.some(
+      (appointment) => {
+        const existingStart = new Date(
+          `${values.appointment_date}T${appointment.appointment_time}`
+        );
+
+        const existingEnd = new Date(existingStart);
+        existingEnd.setMinutes(
+          existingEnd.getMinutes() +
+            (appointment.duration_minutes ?? 30)
+        );
+
+        return (
+          start < existingEnd &&
+          end > existingStart
+        );
+      }
+    );
+
+    if (hasConflict) {
+      toast.error(
+        "This doctor already has an appointment during that time."
+      );
+      return;
+    }
+
+    // Save appointment
+    const { error } = await supabase
+      .from("appointments")
+      .insert({
         patient_id: values.patient_id,
         doctor_id: values.doctor_id,
         appointment_date: values.appointment_date,
         appointment_time: time,
+        duration_minutes: values.duration_minutes,
         status: values.status,
         notes: values.notes,
       });
 
-      if (error) {
-	  console.log("Supabase Error:", error);
-	  alert(JSON.stringify(error, null, 2));
-	  return;
-	}
+    if (error) throw error;
 
-      toast.success("Appointment created successfully.");
+    toast.success(
+      "Appointment created successfully."
+    );
 
-      form.reset();
+    form.reset();
+    setOpen(false);
+    router.refresh();
+  } catch (error) {
+    console.error("SUPABASE ERROR:", error);
 
-      setOpen(false);
-
-      router.refresh();
-    } catch (error) {
-      console.error("SUPABASE ERROR:", error);
-
-      toast.error("Failed to create appointment", {
+    toast.error(
+      "Failed to create appointment",
+      {
         description:
           error instanceof Error
             ? error.message
             : JSON.stringify(error),
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+      }
+    );
+  } finally {
+    setIsSubmitting(false);
   }
+}
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-500 text-white">
-          <CalendarPlus className="mr-2 h-4 w-4" />
-          New Appointment
-        </Button>
-      </DialogTrigger>
+		<DialogTrigger
+		  className="inline-flex h-12 items-center rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 text-white shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5 hover:shadow-indigo-500/40"
+		>
+		  <CalendarPlus className="mr-2 h-5 w-5" />
+		  New Appointment
+		</DialogTrigger>
 
       <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
         <DialogHeader>
@@ -168,14 +245,18 @@ export default function AddAppointmentDialog({
                     >
                       <option value="">Select patient</option>
 
-                      {patients.map((patient) => (
+                      {patients.length === 0 ? (
+					  <option disabled>Loading patients...</option>
+					) : (
+					  patients.map((patient) => (
                         <option
                           key={patient.id}
                           value={patient.id}
                         >
                           {patient.name}
                         </option>
-                      ))}
+                        ))
+						)}
                     </select>
                   </FormControl>
 
@@ -200,14 +281,18 @@ export default function AddAppointmentDialog({
                     >
                       <option value="">Select doctor</option>
 
-                      {doctors.map((doctor) => (
+                      {doctors.length === 0 ? (
+					  <option disabled>Loading doctors...</option>
+					) : (
+					  doctors.map((doctor) => (
                         <option
                           key={doctor.id}
                           value={doctor.id}
                         >
                           {doctor.name}
                         </option>
-                      ))}
+                        ))
+					)}
                     </select>
                   </FormControl>
 
@@ -256,6 +341,34 @@ export default function AddAppointmentDialog({
                 </FormItem>
               )}
             />
+			
+			{/* Duration */}
+			<FormField
+			  control={form.control}
+			  name="duration_minutes"
+			  render={({ field }) => (
+				<FormItem>
+				  <FormLabel>Duration</FormLabel>
+
+				  <FormControl>
+					<select
+					  value={field.value}
+					  onChange={(e) =>
+						field.onChange(Number(e.target.value))
+					  }
+					  className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2"
+					>
+					  <option value={15}>15 Minutes</option>
+					  <option value={30}>30 Minutes</option>
+					  <option value={45}>45 Minutes</option>
+					  <option value={60}>60 Minutes</option>
+					</select>
+				  </FormControl>
+
+				  <FormMessage />
+				</FormItem>
+			  )}
+			/>
 
             {/* Status */}
             <FormField
@@ -307,6 +420,7 @@ export default function AddAppointmentDialog({
               <Button
                 type="button"
                 variant="outline"
+				className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
                 onClick={() => setOpen(false)}
               >
                 Cancel
@@ -314,6 +428,7 @@ export default function AddAppointmentDialog({
 
               <Button
                 type="submit"
+				className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500"
                 disabled={isSubmitting}
               >
                 {isSubmitting && (

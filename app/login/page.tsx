@@ -1,8 +1,8 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2, CalendarDays, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -11,12 +11,15 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
 
     setLoading(true);
+    setError("");
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -26,42 +29,57 @@ export default function LoginPage() {
     setLoading(false);
 
     if (error) {
-      alert(error.message);
+      setError(error.message);
       return;
     }
 
     router.push("/dashboard");
+    router.refresh();
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-white">
-      <div className="w-full max-w-md space-y-8 rounded-xl border border-zinc-800 bg-zinc-900 p-8">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-zinc-950 px-6">
+
+      {/* Background */}
+
+      <div className="absolute inset-0">
+
+        <div className="absolute -left-24 top-0 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
+
+        <div className="absolute right-0 bottom-0 h-[420px] w-[420px] rounded-full bg-violet-600/20 blur-3xl" />
+
+      </div>
+
+      <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-zinc-900/90 p-10 shadow-2xl backdrop-blur-xl">
 
         {/* Logo */}
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600">
-            <CalendarDays size={24} />
+
+        <div className="mb-10 text-center">
+
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-xl shadow-indigo-500/30">
+
+            <CalendarDays className="h-10 w-10 text-white" />
+
           </div>
 
-          <h1 className="text-2xl font-bold">
+          <h1 className="mt-6 text-3xl font-bold text-white">
             CareFlow AI
           </h1>
 
-          <p className="mt-2 text-sm text-zinc-400">
-            Smart appointment management platform
+          <p className="mt-2 text-zinc-400">
+            Smart Clinic Management Platform
           </p>
+
         </div>
 
-
-        {/* Login Form */}
         <form
           onSubmit={handleLogin}
-          className="space-y-4"
+          className="space-y-5"
         >
 
-          {/* Email */}
           <div>
-            <label className="mb-2 block text-sm text-zinc-300">
+
+            <label className="mb-2 block text-sm font-medium text-zinc-300">
               Email
             </label>
 
@@ -70,15 +88,15 @@ export default function LoginPage() {
               placeholder="doctor@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500"
+              className="h-12 w-full rounded-xl border border-white/10 bg-zinc-950 px-4 text-white outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               required
             />
+
           </div>
 
-
-          {/* Password */}
           <div>
-            <label className="mb-2 block text-sm text-zinc-300">
+
+            <label className="mb-2 block text-sm font-medium text-zinc-300">
               Password
             </label>
 
@@ -87,29 +105,61 @@ export default function LoginPage() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500"
+              className="h-12 w-full rounded-xl border border-white/10 bg-zinc-950 px-4 text-white outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               required
             />
+
           </div>
 
+          {error && (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+              {error}
+            </div>
+          )}
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-indigo-600 py-3 text-sm font-medium hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 font-semibold text-white transition hover:from-indigo-500 hover:to-violet-500 disabled:opacity-60"
           >
-            {loading ? "Signing in..." : "Sign In"}
+
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Signing In...
+              </>
+            ) : (
+              "Sign In"
+            )}
+
           </button>
 
         </form>
 
+        <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
 
-        <p className="text-center text-sm text-zinc-500">
-          Demo account · AI Appointment System
-        </p>
+          <div className="flex items-center gap-3">
+
+            <ShieldCheck className="h-6 w-6 text-emerald-400" />
+
+            <div>
+
+              <p className="text-sm font-semibold text-white">
+                Secure Authentication
+              </p>
+
+              <p className="text-xs text-zinc-400">
+                Powered by Supabase Authentication
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
+
     </div>
   );
 }

@@ -43,6 +43,8 @@ import {
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   specialty: z.string().min(2, "Specialty is required."),
+  work_start: z.string().min(1, "Required"),
+  work_end: z.string().min(1, "Required"),
   availability: z.enum([
     "Available",
     "Busy",
@@ -58,6 +60,8 @@ interface EditDoctorDialogProps {
     name: string;
     specialty: string;
     availability: string;
+    work_start: string | null;
+    work_end: string | null;
   };
 }
 
@@ -77,23 +81,28 @@ export function EditDoctorDialog({
       name: "",
       specialty: "",
       availability: "Available",
+	  work_start: "09:00",
+	  work_end: "17:00",
     },
   });
 
-  useEffect(() => {
-    if (!open) return;
+useEffect(() => {
+  if (!open) return;
 
-    form.reset({
-      name: doctor.name,
-      specialty: doctor.specialty ?? "",
-      availability:
-        doctor.availability === "Busy"
-          ? "Busy"
-          : doctor.availability === "On Leave"
-          ? "On Leave"
-          : "Available",
-    });
-  }, [open, doctor, form]);
+  form.reset({
+    name: doctor.name,
+    specialty: doctor.specialty ?? "",
+    availability:
+      doctor.availability === "Busy"
+        ? "Busy"
+        : doctor.availability === "On Leave"
+        ? "On Leave"
+        : "Available",
+
+    work_start: doctor.work_start ?? "09:00",
+    work_end: doctor.work_end ?? "17:00",
+  });
+}, [open, doctor, form]);
 
   async function onSubmit(values: FormValues) {
     try {
@@ -102,10 +111,12 @@ export function EditDoctorDialog({
       const { error } = await supabase
         .from("doctors")
         .update({
-          name: values.name,
-          specialty: values.specialty,
-          availability: values.availability,
-        })
+		  name: values.name,
+		  specialty: values.specialty,
+		  availability: values.availability,
+		  work_start: values.work_start,
+		  work_end: values.work_end,
+		})
         .eq("id", doctor.id);
 
       if (error) {
@@ -236,11 +247,50 @@ export function EditDoctorDialog({
                 </FormItem>
               )}
             />
+			
+			<FormField
+			  control={form.control}
+			  name="work_start"
+			  render={({ field }) => (
+				<FormItem>
+				  <FormLabel>Work Start</FormLabel>
+
+				  <FormControl>
+					<Input
+					  type="time"
+					  {...field}
+					/>
+				  </FormControl>
+
+				  <FormMessage />
+				</FormItem>
+			  )}
+			/>
+			
+			<FormField
+			  control={form.control}
+			  name="work_end"
+			  render={({ field }) => (
+				<FormItem>
+				  <FormLabel>Work End</FormLabel>
+
+				  <FormControl>
+					<Input
+					  type="time"
+					  {...field}
+					/>
+				  </FormControl>
+
+				  <FormMessage />
+				</FormItem>
+			  )}
+			/>
 
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
+				className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
                 onClick={() => setOpen(false)}
               >
                 Cancel
@@ -248,6 +298,7 @@ export function EditDoctorDialog({
 
               <Button
                 type="submit"
+				className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500"
                 disabled={isSubmitting}
               >
                 {isSubmitting && (

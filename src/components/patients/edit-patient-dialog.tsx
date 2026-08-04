@@ -285,6 +285,7 @@ const form = useForm<FormValues>({
               <Button
                 type="button"
                 variant="outline"
+				className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
                 onClick={() => setOpen(false)}
               >
                 Cancel
@@ -292,6 +293,7 @@ const form = useForm<FormValues>({
 
               <Button
                 type="submit"
+				className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500"
                 disabled={isSubmitting}
               >
                 {isSubmitting && (

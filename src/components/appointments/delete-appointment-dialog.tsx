@@ -60,14 +60,11 @@ export default function DeleteAppointmentDialog({
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          size="icon"
-          variant="destructive"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </AlertDialogTrigger>
+		<AlertDialogTrigger
+		  className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-red-600 text-white hover:bg-red-700"
+		>
+		  <Trash2 className="h-4 w-4" />
+		</AlertDialogTrigger>
 
       <AlertDialogContent>
         <AlertDialogHeader>

@@ -70,6 +70,8 @@ console.log({
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   specialty: z.string().min(2, "Specialty is required."),
+  work_start: z.string().min(1, "Required"),
+  work_end: z.string().min(1, "Required"),
   availability: z.enum([
     "Available",
     "Busy",
@@ -93,6 +95,8 @@ export default function AddDoctorDialog() {
 	  name: "",
 	  specialty: "",
 	  availability: "Available",
+	  work_start: "09:00",
+	  work_end: "17:00",
 	},
   });
 
@@ -102,13 +106,18 @@ export default function AddDoctorDialog() {
 	  try {
 		setIsSubmitting(true);
 
-		const { error } = await supabase
+		const { data, error } = await supabase
 		  .from("doctors")
 		  .insert({
 			name: values.name,
 			specialty: values.specialty,
 			availability: values.availability,
-		  });
+			work_start: values.work_start,
+			work_end: values.work_end,
+		  })
+		  .select();
+
+		console.log("Inserted doctor:", data);
 
 		if (error) {
 		  throw error;
@@ -142,13 +151,13 @@ export default function AddDoctorDialog() {
       onOpenChange={setOpen}
     >
       <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-500 text-white">
+        <Button className="h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 font-medium text-white shadow-lg shadow-indigo-500/20 transition-all duration-300 hover:scale-[1.02] hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/40">
           <UserPlus className="mr-2 h-4 w-4" />
           Add Doctor
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+      <DialogContent className="max-w-2xl border-white/10 bg-zinc-950 text-white shadow-2xl shadow-black/50">
         <DialogHeader>
           <DialogTitle>Add New Doctor</DialogTitle>
 
@@ -172,6 +181,7 @@ export default function AddDoctorDialog() {
                   <FormControl>
                     <Input
                       placeholder="John Smith"
+					  className="bg-zinc-900 border-white/10"
                       {...field}
                     />
                   </FormControl>
@@ -191,6 +201,7 @@ export default function AddDoctorDialog() {
 				  <FormControl>
 					<Input
 					  placeholder="Cardiologist"
+					  className="bg-zinc-900 border-white/10"
 					  {...field}
 					/>
 				  </FormControl>
@@ -214,12 +225,12 @@ export default function AddDoctorDialog() {
 					value={field.value}
 				  >
 					<FormControl>
-					  <SelectTrigger>
+					  <SelectTrigger className="h-11 border-white/10 bg-zinc-900">
 						<SelectValue placeholder="Select availability" />
 					  </SelectTrigger>
 					</FormControl>
 
-					<SelectContent>
+					<SelectContent className="border-white/10 bg-zinc-900 text-white">
 					  <SelectItem value="Available">
 						Available
 					  </SelectItem>
@@ -238,11 +249,56 @@ export default function AddDoctorDialog() {
 				</FormItem>
 			  )}
 			/>
+			
+			<div className="grid grid-cols-2 gap-4">
+
+			  <FormField
+				control={form.control}
+				name="work_start"
+				render={({ field }) => (
+				  <FormItem>
+					<FormLabel>Work Start</FormLabel>
+
+					<FormControl>
+					  <Input
+						type="time"
+						{...field}
+						className="bg-zinc-900 border-white/10"
+					  />
+					</FormControl>
+
+					<FormMessage />
+				  </FormItem>
+				)}
+			  />
+
+			  <FormField
+				control={form.control}
+				name="work_end"
+				render={({ field }) => (
+				  <FormItem>
+					<FormLabel>Work End</FormLabel>
+
+					<FormControl>
+					  <Input
+						type="time"
+						{...field}
+						className="bg-zinc-900 border-white/10"
+					  />
+					</FormControl>
+
+					<FormMessage />
+				  </FormItem>
+				)}
+			  />
+
+			</div>
 
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
+				className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
                 onClick={() => setOpen(false)}
               >
                 Cancel
@@ -250,6 +306,7 @@ export default function AddDoctorDialog() {
 
               <Button
                 type="submit"
+				className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500"
                 disabled={isSubmitting}
               >
                 {isSubmitting && (
