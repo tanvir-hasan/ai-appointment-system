@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -9,65 +9,83 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { EditPatientDialog } from "@/components/patients/edit-patient-dialog";
-import { DeletePatientDialog } from "@/components/patients/delete-patient-dialog";
 
-interface PatientActionsProps {
-  patient: {
+interface DoctorActionsProps {
+  doctor: {
     id: string;
     name: string;
-    age: number;
-    phone: string;
-    patient_email: string;
-    status: string;
   };
+
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
-export function PatientActions({
-  patient,
-}: PatientActionsProps) {
-  const [editOpen, setEditOpen] = useState(false);
+
+export default function DoctorActions({
+  doctor,
+  onEdit,
+  onDelete,
+}: DoctorActionsProps) {
+
+  const [open, setOpen] = useState(false);
+
 
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-zinc-400 hover:text-white"
-          >
-            <MoreVertical className="h-5 w-5" />
-          </Button>
-        </DropdownMenuTrigger>
+    <DropdownMenu
+      open={open}
+      onOpenChange={setOpen}
+    >
 
-        <DropdownMenuContent
-          align="end"
-          className="bg-zinc-900 border-zinc-800 text-white"
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setOpen(true)}
+        className="rounded-xl text-zinc-400 hover:bg-zinc-800 hover:text-white"
+      >
+        <MoreHorizontal className="h-5 w-5" />
+      </Button>
+
+
+      <DropdownMenuContent
+        align="end"
+        className="border-white/10 bg-zinc-900 text-white"
+      >
+
+        <DropdownMenuItem
+          onClick={() => {
+            setOpen(false);
+            onEdit();
+          }}
+          className="cursor-pointer hover:bg-zinc-800"
         >
-          <DropdownMenuItem
-            onSelect={() => setEditOpen(true)}
-          >
-            Edit
-          </DropdownMenuItem>
 
-          <div className="px-1">
-            <DeletePatientDialog
-              patientId={patient.id}
-              patientName={patient.name}
-            />
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <Pencil className="mr-2 h-4 w-4" />
 
-      <EditPatientDialog
-        patient={patient}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-      />
-    </>
+          Edit Doctor
+
+        </DropdownMenuItem>
+
+
+
+        <DropdownMenuItem
+          onClick={() => {
+            setOpen(false);
+            onDelete();
+          }}
+          className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-400"
+        >
+
+          <Trash2 className="mr-2 h-4 w-4" />
+
+          Delete Doctor
+
+        </DropdownMenuItem>
+
+
+      </DropdownMenuContent>
+
+    </DropdownMenu>
   );
 }

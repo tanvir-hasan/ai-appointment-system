@@ -49,7 +49,6 @@ export default function AppointmentFilters({
         {/* Search */}
 
         <div>
-
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Search
           </label>
@@ -69,8 +68,8 @@ export default function AppointmentFilters({
             />
 
           </div>
-
         </div>
+
 
         {/* Status */}
 
@@ -84,29 +83,35 @@ export default function AppointmentFilters({
 
           </label>
 
+
           <Select
             value={status}
-            onValueChange={onStatusChange}
+            onValueChange={(value) => {
+              if (value) {
+                onStatusChange(value);
+              }
+            }}
           >
 
-			<SelectTrigger
-			  className="
-				h-12
-				w-full
-				rounded-2xl
-				border-white/10
-				bg-zinc-900
-				px-4
-				text-white
-				shadow-none
-				focus:border-indigo-500
-				focus:ring-4
-				focus:ring-indigo-500/10
-				[&>span]:text-white
-			  "
-			>
-			  <SelectValue placeholder="All Status" />
-			</SelectTrigger>
+            <SelectTrigger
+              className="
+                h-12
+                w-full
+                rounded-2xl
+                border-white/10
+                bg-zinc-900
+                px-4
+                text-white
+                shadow-none
+                focus:border-indigo-500
+                focus:ring-4
+                focus:ring-indigo-500/10
+                [&>span]:text-white
+              "
+            >
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+
 
             <SelectContent className="border-white/10 bg-zinc-900 text-white">
 
@@ -136,6 +141,7 @@ export default function AppointmentFilters({
 
         </div>
 
+
         {/* Doctor */}
 
         <div>
@@ -148,35 +154,42 @@ export default function AppointmentFilters({
 
           </label>
 
+
           <Select
             value={doctor}
-            onValueChange={onDoctorChange}
+            onValueChange={(value) => {
+              if (value) {
+                onDoctorChange(value);
+              }
+            }}
           >
 
-			<SelectTrigger
-			  className="
-				h-12
-				w-full
-				rounded-2xl
-				border-white/10
-				bg-zinc-900
-				px-4
-				text-white
-				shadow-none
-				focus:border-indigo-500
-				focus:ring-4
-				focus:ring-indigo-500/10
-				[&>span]:text-white
-			  "
-			>
-			  <SelectValue placeholder="All Doctors" />
-			</SelectTrigger>
+            <SelectTrigger
+              className="
+                h-12
+                w-full
+                rounded-2xl
+                border-white/10
+                bg-zinc-900
+                px-4
+                text-white
+                shadow-none
+                focus:border-indigo-500
+                focus:ring-4
+                focus:ring-indigo-500/10
+                [&>span]:text-white
+              "
+            >
+              <SelectValue placeholder="All Doctors" />
+            </SelectTrigger>
+
 
             <SelectContent className="border-white/10 bg-zinc-900 text-white">
 
               <SelectItem value="all">
                 All Doctors
               </SelectItem>
+
 
               {doctors.map((doc) => (
                 <SelectItem

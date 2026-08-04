@@ -47,15 +47,17 @@ const formSchema = z.object({
     "Cancelled",
   ]),
 
-  duration_minutes: z.coerce
-    .number()
-    .min(5, "Duration must be at least 5 minutes"),
+duration_minutes: z.preprocess(
+  (value) => Number(value),
+  z.number().min(5, "Duration must be at least 5 minutes")
+),
 
   notes: z.string().optional(),
 });
 
 
-type FormValues = z.infer<typeof formSchema>;
+type FormInput = z.input<typeof formSchema>;
+type FormValues = z.output<typeof formSchema>;
 
 
 export default function AddAppointmentDialog() {
@@ -114,7 +116,7 @@ export default function AddAppointmentDialog() {
 
 
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, any, FormValues>({
 
     resolver: zodResolver(formSchema),
 
@@ -126,7 +128,7 @@ export default function AddAppointmentDialog() {
       appointment_date: "",
       appointment_time: "",
 
-      duration_minutes: 30,
+      duration_minutes: "30",
 
       status: "Scheduled",
 
@@ -339,12 +341,12 @@ export default function AddAppointmentDialog() {
                   <FormControl>
 
                     <select
-                      value={field.value}
-                      onChange={(e) =>
-                        field.onChange(e.target.value)
-                      }
-                      className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2"
-                    >
+					  value={field.value}
+					  onChange={(e) =>
+						field.onChange(e.target.value)
+					  }
+					  className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2"
+					>
 
                       <option value="">
                         Select patient
@@ -510,14 +512,12 @@ export default function AddAppointmentDialog() {
                   <FormControl>
 
                     <select
-                      value={String(field.value ?? 30)}
-                      onChange={(e) =>
-                        field.onChange(
-                          Number(e.target.value)
-                        )
-                      }
-                      className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2"
-                    >
+					  value={String(field.value ?? "30")}
+					  onChange={(e) =>
+						field.onChange(e.target.value)
+					  }
+					  className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2"
+					>
 
                       <option value="15">
                         15 Minutes

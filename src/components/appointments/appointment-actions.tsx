@@ -34,7 +34,7 @@ export function PatientActions({
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger  className="outline-none">
           <Button
             variant="ghost"
             size="icon"

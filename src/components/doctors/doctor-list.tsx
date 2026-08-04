@@ -15,8 +15,8 @@ interface Doctor {
   name: string;
   specialty: string;
   availability: string;
-  work_start?: string | null;
-  work_end?: string | null;
+  work_start: string | null;
+  work_end: string | null;
 }
 
 interface Props {
@@ -27,24 +27,31 @@ export default function DoctorsList({
   doctors,
 }: Props) {
   const [search, setSearch] = useState("");
+
   const [filter, setFilter] = useState<
     "all" | "available" | "busy"
   >("all");
 
+
   const filteredDoctors = useMemo(() => {
     let result = doctors;
 
+
     if (filter === "available") {
       result = result.filter(
-        (doctor) => doctor.availability === "Available"
+        (doctor) =>
+          doctor.availability === "Available"
       );
     }
 
+
     if (filter === "busy") {
       result = result.filter(
-        (doctor) => doctor.availability !== "Available"
+        (doctor) =>
+          doctor.availability !== "Available"
       );
     }
+
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -57,15 +64,18 @@ export default function DoctorsList({
       );
     }
 
+
     return result;
+
   }, [search, filter, doctors]);
+
 
   return (
     <div className="space-y-6">
 
-      {/* Search + Filters */}
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
 
         <div className="relative w-full max-w-md">
 
@@ -76,34 +86,57 @@ export default function DoctorsList({
 
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
             placeholder="Search doctors..."
             className="h-12 w-full rounded-2xl border border-white/10 bg-zinc-900 pl-12 pr-4 text-sm text-white placeholder:text-zinc-500 outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
           />
 
         </div>
 
+
         <div className="flex gap-3">
 
           <Button
-            variant={filter === "all" ? "default" : "outline"}
-            onClick={() => setFilter("all")}
+            variant={
+              filter === "all"
+                ? "default"
+                : "outline"
+            }
+            onClick={() =>
+              setFilter("all")
+            }
             className="rounded-xl"
           >
             All Doctors
           </Button>
 
+
           <Button
-            variant={filter === "available" ? "default" : "outline"}
-            onClick={() => setFilter("available")}
+            variant={
+              filter === "available"
+                ? "default"
+                : "outline"
+            }
+            onClick={() =>
+              setFilter("available")
+            }
             className="rounded-xl"
           >
             Available
           </Button>
 
+
           <Button
-            variant={filter === "busy" ? "default" : "outline"}
-            onClick={() => setFilter("busy")}
+            variant={
+              filter === "busy"
+                ? "default"
+                : "outline"
+            }
+            onClick={() =>
+              setFilter("busy")
+            }
             className="rounded-xl"
           >
             Busy
@@ -113,7 +146,7 @@ export default function DoctorsList({
 
       </div>
 
-      {/* Doctor Cards */}
+
 
       <div className="space-y-4">
 
@@ -128,11 +161,15 @@ export default function DoctorsList({
 
               <CardContent className="flex items-center justify-between p-7">
 
+
                 <div className="flex items-center gap-5">
 
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 text-xl font-bold text-white shadow-lg shadow-indigo-500/30">
+
                     {doctor.name.charAt(0)}
+
                   </div>
+
 
                   <div>
 
@@ -140,17 +177,23 @@ export default function DoctorsList({
                       {doctor.name}
                     </h3>
 
+
                     <div className="mt-3 flex flex-wrap gap-2">
 
                       <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
                         🩺 {doctor.specialty}
                       </span>
 
-                      {doctor.work_start && doctor.work_end && (
-                        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
-                          🕘 {doctor.work_start.slice(0,5)} - {doctor.work_end.slice(0,5)}
-                        </span>
-                      )}
+
+                      {doctor.work_start &&
+                        doctor.work_end && (
+                          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
+                            🕘{" "}
+                            {doctor.work_start.slice(0, 5)}
+                            {" - "}
+                            {doctor.work_end.slice(0, 5)}
+                          </span>
+                        )}
 
                     </div>
 
@@ -158,7 +201,10 @@ export default function DoctorsList({
 
                 </div>
 
+
+
                 <div className="flex items-center gap-3">
+
 
                   <Badge
                     className={`rounded-full px-4 py-1 font-medium ${
@@ -172,18 +218,23 @@ export default function DoctorsList({
                     {doctor.availability}
                   </Badge>
 
+
                   <EditDoctorDialog
                     doctor={doctor}
                   />
+
 
                   <DeleteDoctorDialog
                     doctorId={doctor.id}
                     doctorName={doctor.name}
                   />
 
+
                 </div>
 
+
               </CardContent>
+
 
             </Card>
 
@@ -199,13 +250,16 @@ export default function DoctorsList({
                 👨‍⚕️
               </div>
 
+
               <h3 className="mt-6 text-lg font-semibold text-white">
                 No doctors found
               </h3>
 
+
               <p className="mt-2 text-zinc-400">
                 Try another search or add a new doctor.
               </p>
+
 
             </CardContent>
 
@@ -214,6 +268,7 @@ export default function DoctorsList({
         )}
 
       </div>
+
 
     </div>
   );

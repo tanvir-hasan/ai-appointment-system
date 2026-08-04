@@ -7,21 +7,74 @@ import { XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
+
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+  return (
+    <DialogPrimitive.Root
+      data-slot="dialog"
+      {...props}
+    />
+  )
 }
 
-function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+
+function DialogTrigger({
+  children,
+  asChild,
+  ...props
+}: DialogPrimitive.Trigger.Props & {
+  asChild?: boolean
+}) {
+  return (
+    <DialogPrimitive.Trigger
+      data-slot="dialog-trigger"
+      render={
+        asChild
+          ? React.Children.only(children) as React.ReactElement
+          : undefined
+      }
+      {...props}
+    >
+      {!asChild && children}
+    </DialogPrimitive.Trigger>
+  )
 }
 
-function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+
+function DialogPortal({
+  ...props
+}: DialogPrimitive.Portal.Props) {
+  return (
+    <DialogPrimitive.Portal
+      data-slot="dialog-portal"
+      {...props}
+    />
+  )
 }
 
-function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
+
+function DialogClose({
+  children,
+  asChild,
+  ...props
+}: DialogPrimitive.Close.Props & {
+  asChild?: boolean
+}) {
+  return (
+    <DialogPrimitive.Close
+      data-slot="dialog-close"
+      render={
+        asChild
+          ? React.Children.only(children) as React.ReactElement
+          : undefined
+      }
+      {...props}
+    >
+      {!asChild && children}
+    </DialogPrimitive.Close>
+  )
 }
+
 
 function DialogOverlay({
   className,
@@ -41,6 +94,7 @@ function DialogOverlay({
   )
 }
 
+
 function DialogContent({
   className,
   children,
@@ -49,9 +103,12 @@ function DialogContent({
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
 }) {
+
   return (
     <DialogPortal>
+
       <DialogOverlay />
+
 
       <DialogPrimitive.Popup
         data-slot="dialog-content"
@@ -78,9 +135,12 @@ function DialogContent({
         )}
         {...props}
       >
+
         {children}
 
+
         {showCloseButton && (
+
           <DialogPrimitive.Close
             data-slot="dialog-close"
             render={
@@ -91,21 +151,32 @@ function DialogContent({
               />
             }
           >
+
             <XIcon className="h-5 w-5" />
+
             <span className="sr-only">
               Close
             </span>
+
           </DialogPrimitive.Close>
+
         )}
+
+
       </DialogPrimitive.Popup>
+
+
     </DialogPortal>
   )
 }
+
+
 
 function DialogHeader({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+
   return (
     <div
       data-slot="dialog-header"
@@ -118,6 +189,8 @@ function DialogHeader({
   )
 }
 
+
+
 function DialogFooter({
   className,
   showCloseButton = false,
@@ -126,6 +199,7 @@ function DialogFooter({
 }: React.ComponentProps<"div"> & {
   showCloseButton?: boolean
 }) {
+
   return (
     <div
       data-slot="dialog-footer"
@@ -135,9 +209,12 @@ function DialogFooter({
       )}
       {...props}
     >
+
       {children}
 
+
       {showCloseButton && (
+
         <DialogPrimitive.Close
           render={
             <Button
@@ -148,15 +225,21 @@ function DialogFooter({
         >
           Close
         </DialogPrimitive.Close>
+
       )}
+
+
     </div>
   )
 }
+
+
 
 function DialogTitle({
   className,
   ...props
 }: DialogPrimitive.Title.Props) {
+
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
@@ -169,10 +252,13 @@ function DialogTitle({
   )
 }
 
+
+
 function DialogDescription({
   className,
   ...props
 }: DialogPrimitive.Description.Props) {
+
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
@@ -184,6 +270,8 @@ function DialogDescription({
     />
   )
 }
+
+
 
 export {
   Dialog,

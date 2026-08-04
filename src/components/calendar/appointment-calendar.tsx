@@ -16,11 +16,13 @@ import type {
   Doctor,
 } from "@/types/database";
 
+
 interface AppointmentCalendarProps {
   appointments: Appointment[];
   patients: Patient[];
   doctors: Doctor[];
 }
+
 
 function getEventColor(status: string) {
   switch (status) {
@@ -41,76 +43,120 @@ function getEventColor(status: string) {
   }
 }
 
+
 function getEndDateTime(
   date: string,
   time: string,
   duration: number
 ) {
   const end = new Date(`${date}T${time}`);
-  end.setMinutes(end.getMinutes() + duration);
+
+  end.setMinutes(
+    end.getMinutes() + duration
+  );
 
   return end.toISOString();
 }
+
+
 
 export default function AppointmentCalendar({
   appointments,
   patients,
   doctors,
 }: AppointmentCalendarProps) {
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+
+
+  const [detailsOpen, setDetailsOpen] =
+    useState(false);
+
+  const [editOpen, setEditOpen] =
+    useState(false);
+
 
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
 
+
+
   const events = appointments.map((appointment) => ({
+
     id: appointment.id,
 
-    title: `${appointment.patients?.name} • ${appointment.doctors?.name}`,
 
-    start: `${appointment.appointment_date}T${appointment.appointment_time}`,
+    title:
+      `${appointment.patients?.name ?? "Patient"} • ${appointment.doctors?.name ?? "Doctor"}`,
 
-    end: getEndDateTime(
-      appointment.appointment_date,
-      appointment.appointment_time,
-      appointment.duration_minutes
-    ),
 
-    backgroundColor: getEventColor(appointment.status),
-    borderColor: getEventColor(appointment.status),
+    start:
+      `${appointment.appointment_date}T${appointment.appointment_time}`,
+
+
+    end:
+      getEndDateTime(
+        appointment.appointment_date,
+        appointment.appointment_time,
+        appointment.duration_minutes ?? 30
+      ),
+
+
+    backgroundColor:
+      getEventColor(
+        appointment.status
+      ),
+
+    borderColor:
+      getEventColor(
+        appointment.status
+      ),
+
     textColor: "#ffffff",
+
 
     extendedProps: {
       appointment,
     },
+
   }));
+
+
 
   return (
     <>
+
       <div className="calendar-wrapper rounded-3xl">
 
         <FullCalendar
+
           plugins={[
             dayGridPlugin,
             timeGridPlugin,
             interactionPlugin,
           ]}
 
+
           initialView="dayGridMonth"
+
 
           height="78vh"
 
+
           selectable
+
 
           editable={false}
 
+
           events={events}
+
 
           headerToolbar={{
             left: "prev,next today",
             center: "title",
-            right: "dayGridMonth,timeGridWeek,timeGridDay",
+            right:
+              "dayGridMonth,timeGridWeek,timeGridDay",
           }}
+
 
           buttonText={{
             today: "Today",
@@ -119,52 +165,79 @@ export default function AppointmentCalendar({
             day: "Day",
           }}
 
+
           eventDisplay="block"
+
 
           dayMaxEvents={3}
 
+
           eventClick={(info) => {
+
+            const appointment =
+              info.event.extendedProps
+                .appointment as Appointment;
+
+
             setSelectedAppointment(
-              info.event.extendedProps.appointment
+              appointment
             );
 
+
             setDetailsOpen(true);
+
           }}
+
         />
+
       </div>
 
+
+
       <AppointmentDetailsDialog
+
         open={detailsOpen}
+
         onOpenChange={setDetailsOpen}
+
         appointment={selectedAppointment}
+
         onEdit={() => {
+
           setDetailsOpen(false);
+
           setEditOpen(true);
+
         }}
+
       />
 
+
+
       {selectedAppointment && (
+
         <EditAppointmentDialog
+
           open={editOpen}
+
           onOpenChange={setEditOpen}
-          appointment={{
-            id: selectedAppointment.id,
-            patient_id: selectedAppointment.patient_id,
-            doctor_id: selectedAppointment.doctor_id,
-            appointment_date:
-              selectedAppointment.appointment_date,
-            appointment_time:
-              selectedAppointment.appointment_time,
-            duration_minutes:
-              selectedAppointment.duration_minutes,
-            status: selectedAppointment.status,
-            notes:
-              selectedAppointment.notes ?? "",
-          }}
+
+
+          appointment={
+            selectedAppointment
+          }
+
+
           patients={patients}
+
+
           doctors={doctors}
+
         />
+
       )}
+
+
     </>
   );
 }

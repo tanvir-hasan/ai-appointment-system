@@ -11,6 +11,7 @@ import { Loader2, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 import { Button } from "@/components/ui/button";
+
 import {
   Dialog,
   DialogContent,
@@ -18,7 +19,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 import {
@@ -40,6 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   specialty: z.string().min(2, "Specialty is required."),
@@ -52,7 +53,9 @@ const formSchema = z.object({
   ]),
 });
 
+
 type FormValues = z.infer<typeof formSchema>;
+
 
 interface EditDoctorDialogProps {
   doctor: {
@@ -65,14 +68,18 @@ interface EditDoctorDialogProps {
   };
 }
 
+
 export function EditDoctorDialog({
   doctor,
 }: EditDoctorDialogProps) {
+
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+
   const router = useRouter();
   const supabase = createClient();
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -81,236 +88,382 @@ export function EditDoctorDialog({
       name: "",
       specialty: "",
       availability: "Available",
-	  work_start: "09:00",
-	  work_end: "17:00",
+      work_start: "09:00",
+      work_end: "17:00",
     },
   });
 
-useEffect(() => {
-  if (!open) return;
 
-  form.reset({
-    name: doctor.name,
-    specialty: doctor.specialty ?? "",
-    availability:
-      doctor.availability === "Busy"
-        ? "Busy"
-        : doctor.availability === "On Leave"
-        ? "On Leave"
-        : "Available",
+  useEffect(() => {
 
-    work_start: doctor.work_start ?? "09:00",
-    work_end: doctor.work_end ?? "17:00",
-  });
-}, [open, doctor, form]);
+    if (!open) return;
+
+    form.reset({
+
+      name: doctor.name,
+
+      specialty:
+        doctor.specialty ?? "",
+
+      availability:
+        doctor.availability === "Busy"
+          ? "Busy"
+          : doctor.availability === "On Leave"
+          ? "On Leave"
+          : "Available",
+
+      work_start:
+        doctor.work_start ?? "09:00",
+
+      work_end:
+        doctor.work_end ?? "17:00",
+
+    });
+
+  }, [open, doctor, form]);
+
+
 
   async function onSubmit(values: FormValues) {
+
     try {
+
       setIsSubmitting(true);
+
 
       const { error } = await supabase
         .from("doctors")
         .update({
-		  name: values.name,
-		  specialty: values.specialty,
-		  availability: values.availability,
-		  work_start: values.work_start,
-		  work_end: values.work_end,
-		})
+
+          name: values.name,
+
+          specialty: values.specialty,
+
+          availability:
+            values.availability,
+
+          work_start:
+            values.work_start,
+
+          work_end:
+            values.work_end,
+
+        })
         .eq("id", doctor.id);
+
 
       if (error) {
         throw error;
       }
 
-      toast.success("Doctor updated successfully", {
-        description: `${values.name} has been updated.`,
-      });
+
+      toast.success(
+        "Doctor updated successfully",
+        {
+          description:
+            `${values.name} has been updated.`,
+        }
+      );
+
 
       setOpen(false);
+
       router.refresh();
 
-    } catch (error) {
-      console.error("Edit doctor error:", error);
 
-      toast.error("Failed to update doctor", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "Something went wrong.",
-      });
+    } catch (error) {
+
+      console.error(
+        "Edit doctor error:",
+        error
+      );
+
+
+      toast.error(
+        "Failed to update doctor",
+        {
+          description:
+            error instanceof Error
+              ? error.message
+              : "Something went wrong.",
+        }
+      );
+
 
     } finally {
+
       setIsSubmitting(false);
+
     }
+
   }
 
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={setOpen}
-    >
-      <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-500 text-white">
-          <Pencil className="mr-2 h-4 w-4" />
-          Edit
-        </Button>
-      </DialogTrigger>
 
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
-        <DialogHeader>
-          <DialogTitle>Edit Doctor</DialogTitle>
+    <>
+      <Button
+        onClick={() => setOpen(true)}
+        className="bg-indigo-600 hover:bg-indigo-500 text-white"
+      >
+        <Pencil className="mr-2 h-4 w-4" />
+        Edit
+      </Button>
 
-          <DialogDescription className="text-zinc-400">
-            Update the doctor's information.
-          </DialogDescription>
-        </DialogHeader>
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4"
-          >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
+      <Dialog
+        open={open}
+        onOpenChange={setOpen}
+      >
 
-                  <FormControl>
-                    <Input
-                      placeholder="John Smith"
-                      {...field}
-                    />
-                  </FormControl>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
 
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <DialogHeader>
 
-            <FormField
-              control={form.control}
-              name="specialty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Specialty</FormLabel>
+            <DialogTitle>
+              Edit Doctor
+            </DialogTitle>
 
-                  <FormControl>
-                    <Input
-                      placeholder="Cardiologist"
-                      {...field}
-                    />
-                  </FormControl>
 
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <DialogDescription className="text-zinc-400">
+              Update the doctor's information.
+            </DialogDescription>
 
-            <FormField
-              control={form.control}
-              name="availability"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Availability
-                  </FormLabel>
+          </DialogHeader>
 
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
+
+
+          <Form {...form}>
+
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+            >
+
+
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+
+                  <FormItem>
+
+                    <FormLabel>
+                      Name
+                    </FormLabel>
+
+
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select availability" />
-                      </SelectTrigger>
+
+                      <Input
+                        placeholder="John Smith"
+                        {...field}
+                      />
+
                     </FormControl>
 
-                    <SelectContent>
-                      <SelectItem value="Available">
-                        Available
-                      </SelectItem>
 
-                      <SelectItem value="Busy">
-                        Busy
-                      </SelectItem>
+                    <FormMessage />
 
-                      <SelectItem value="On Leave">
-                        On Leave
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  </FormItem>
 
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-			
-			<FormField
-			  control={form.control}
-			  name="work_start"
-			  render={({ field }) => (
-				<FormItem>
-				  <FormLabel>Work Start</FormLabel>
-
-				  <FormControl>
-					<Input
-					  type="time"
-					  {...field}
-					/>
-				  </FormControl>
-
-				  <FormMessage />
-				</FormItem>
-			  )}
-			/>
-			
-			<FormField
-			  control={form.control}
-			  name="work_end"
-			  render={({ field }) => (
-				<FormItem>
-				  <FormLabel>Work End</FormLabel>
-
-				  <FormControl>
-					<Input
-					  type="time"
-					  {...field}
-					/>
-				  </FormControl>
-
-				  <FormMessage />
-				</FormItem>
-			  )}
-			/>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-				className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
-                onClick={() => setOpen(false)}
-              >
-                Cancel
-              </Button>
-
-              <Button
-                type="submit"
-				className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500"
-                disabled={isSubmitting}
-              >
-                {isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
+              />
 
-                Update Doctor
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+
+
+              <FormField
+                control={form.control}
+                name="specialty"
+                render={({ field }) => (
+
+                  <FormItem>
+
+                    <FormLabel>
+                      Specialty
+                    </FormLabel>
+
+
+                    <FormControl>
+
+                      <Input
+                        placeholder="Cardiologist"
+                        {...field}
+                      />
+
+                    </FormControl>
+
+
+                    <FormMessage />
+
+                  </FormItem>
+
+                )}
+              />
+
+
+
+              <FormField
+                control={form.control}
+                name="availability"
+                render={({ field }) => (
+
+                  <FormItem>
+
+                    <FormLabel>
+                      Availability
+                    </FormLabel>
+
+
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+
+                      <FormControl>
+
+                        <SelectTrigger>
+
+                          <SelectValue
+                            placeholder="Select availability"
+                          />
+
+                        </SelectTrigger>
+
+                      </FormControl>
+
+
+                      <SelectContent>
+
+                        <SelectItem value="Available">
+                          Available
+                        </SelectItem>
+
+                        <SelectItem value="Busy">
+                          Busy
+                        </SelectItem>
+
+                        <SelectItem value="On Leave">
+                          On Leave
+                        </SelectItem>
+
+                      </SelectContent>
+
+                    </Select>
+
+
+                    <FormMessage />
+
+                  </FormItem>
+
+                )}
+              />
+
+
+
+              <FormField
+                control={form.control}
+                name="work_start"
+                render={({ field }) => (
+
+                  <FormItem>
+
+                    <FormLabel>
+                      Work Start
+                    </FormLabel>
+
+
+                    <FormControl>
+
+                      <Input
+                        type="time"
+                        {...field}
+                      />
+
+                    </FormControl>
+
+
+                    <FormMessage />
+
+                  </FormItem>
+
+                )}
+              />
+
+
+
+              <FormField
+                control={form.control}
+                name="work_end"
+                render={({ field }) => (
+
+                  <FormItem>
+
+                    <FormLabel>
+                      Work End
+                    </FormLabel>
+
+
+                    <FormControl>
+
+                      <Input
+                        type="time"
+                        {...field}
+                      />
+
+                    </FormControl>
+
+
+                    <FormMessage />
+
+                  </FormItem>
+
+                )}
+              />
+
+
+
+              <DialogFooter>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancel
+                </Button>
+
+
+                <Button
+                  type="submit"
+                  className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500"
+                  disabled={isSubmitting}
+                >
+
+                  {isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+
+                  Update Doctor
+
+                </Button>
+
+
+              </DialogFooter>
+
+
+            </form>
+
+          </Form>
+
+
+        </DialogContent>
+
+      </Dialog>
+
+    </>
+
   );
+
 }

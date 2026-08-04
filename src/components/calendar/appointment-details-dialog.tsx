@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogFooter,
-  DialogClose,
   DialogTitle,
 } from "@/components/ui/dialog";
 
@@ -67,6 +66,7 @@ export default function AppointmentDetailsDialog({
   appointment,
   onEdit,
 }: AppointmentDetailsDialogProps) {
+
   if (!appointment) return null;
 
   return (
@@ -74,9 +74,10 @@ export default function AppointmentDetailsDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
+
       <DialogContent className="max-w-lg rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 to-black text-white shadow-2xl">
 
-        <DialogHeader className="pb-4 border-b border-white/10">
+        <DialogHeader className="border-b border-white/10 pb-4">
 
           <DialogTitle className="text-2xl font-bold">
             Appointment Details
@@ -88,7 +89,9 @@ export default function AppointmentDetailsDialog({
 
         </DialogHeader>
 
+
         <div className="space-y-5 py-2">
+
 
           {/* Patient */}
 
@@ -100,6 +103,7 @@ export default function AppointmentDetailsDialog({
 
             </div>
 
+
             <div>
 
               <p className="text-xs uppercase tracking-wide text-zinc-500">
@@ -107,12 +111,14 @@ export default function AppointmentDetailsDialog({
               </p>
 
               <p className="font-semibold text-white">
-                {appointment.patients?.name}
+                {appointment.patients?.name ?? "Unknown"}
               </p>
 
             </div>
 
           </div>
+
+
 
           {/* Doctor */}
 
@@ -124,6 +130,7 @@ export default function AppointmentDetailsDialog({
 
             </div>
 
+
             <div>
 
               <p className="text-xs uppercase tracking-wide text-zinc-500">
@@ -131,16 +138,19 @@ export default function AppointmentDetailsDialog({
               </p>
 
               <p className="font-semibold text-white">
-                Dr. {appointment.doctors?.name}
+                Dr. {appointment.doctors?.name ?? "Unknown"}
               </p>
 
             </div>
 
           </div>
 
-          {/* Date + Time */}
+
+
+          {/* Date and Time */}
 
           <div className="grid grid-cols-2 gap-4">
+
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
 
@@ -154,7 +164,9 @@ export default function AppointmentDetailsDialog({
 
               </div>
 
+
               <p className="font-semibold text-white">
+
                 {new Date(
                   appointment.appointment_date
                 ).toLocaleDateString("en-US", {
@@ -163,9 +175,12 @@ export default function AppointmentDetailsDialog({
                   day: "numeric",
                   year: "numeric",
                 })}
+
               </p>
 
             </div>
+
+
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
 
@@ -179,18 +194,24 @@ export default function AppointmentDetailsDialog({
 
               </div>
 
+
               <p className="font-semibold text-white">
+
                 {new Date(
                   `2000-01-01T${appointment.appointment_time}`
                 ).toLocaleTimeString([], {
                   hour: "numeric",
                   minute: "2-digit",
                 })}
+
               </p>
 
             </div>
 
+
           </div>
+
+
 
           {/* Status */}
 
@@ -200,44 +221,58 @@ export default function AppointmentDetailsDialog({
               Appointment Status
             </p>
 
+
             <Badge
               className={`${badgeColor(
                 appointment.status
               )} rounded-full px-4 py-1 text-sm font-medium`}
             >
+
               {appointment.status}
+
             </Badge>
+
 
           </div>
 
+
         </div>
+
+
 
         <DialogFooter className="mt-2 flex gap-3 border-t border-white/10 pt-5">
 
-          <DialogClose asChild>
 
-            <Button
-              variant="outline"
-              className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
-            >
-              Close
-            </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white"
+            onClick={() => onOpenChange(false)}
+          >
 
-          </DialogClose>
+            Close
+
+          </Button>
+
+
 
           <Button
             onClick={onEdit}
             className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30 hover:from-indigo-500 hover:to-violet-500"
           >
+
             <Pencil className="mr-2 h-4 w-4" />
 
             Edit Appointment
 
           </Button>
 
+
         </DialogFooter>
 
+
       </DialogContent>
+
     </Dialog>
   );
 }

@@ -18,6 +18,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+
 function formatTime(time: string) {
   const [hour, minute] = time.split(":");
 
@@ -34,6 +35,7 @@ function formatTime(time: string) {
   });
 }
 
+
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("en-US", {
     month: "short",
@@ -41,6 +43,7 @@ function formatDate(date: string) {
     year: "numeric",
   });
 }
+
 
 function getStatusStyle(status: string) {
   switch (status) {
@@ -61,8 +64,11 @@ function getStatusStyle(status: string) {
   }
 }
 
+
 export async function RecentAppointments() {
+
   const supabase = await createClient();
+
 
   const { data: appointments } = await supabase
     .from("appointments")
@@ -78,9 +84,15 @@ export async function RecentAppointments() {
         name
       )
     `)
-    .order("appointment_date", { ascending: false })
-    .order("appointment_time", { ascending: false })
+    .order("appointment_date", {
+      ascending: false,
+    })
+    .order("appointment_time", {
+      ascending: false,
+    })
     .limit(5);
+
+
 
   return (
     <Card className="rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 shadow-xl">
@@ -89,83 +101,135 @@ export async function RecentAppointments() {
 
         <div className="flex items-center justify-between">
 
-          <div>
+          <CardTitle className="text-xl font-bold text-white">
+            Recent Appointments
+          </CardTitle>
 
-            <CardTitle className="text-xl font-bold text-white">
-              Recent Appointments
-            </CardTitle>
 
-          </div>
+          <Link
+            href="/appointments"
+            className="flex items-center gap-1 text-sm font-medium text-indigo-400 transition hover:text-indigo-300"
+          >
+            View All
+            <ChevronRight className="h-4 w-4" />
+          </Link>
 
-		  <Link
-			  href="/appointments"
-			  className="flex items-center gap-1 text-sm font-medium text-indigo-400 transition hover:text-indigo-300"
-			>
-			  View All
-			  <ChevronRight className="h-4 w-4" />
-			</Link>
 
         </div>
 
       </CardHeader>
 
+
+
       <CardContent className="space-y-4 p-6">
 
+
         {appointments?.length ? (
+
           appointments.map((appointment) => (
+
             <div
               key={appointment.id}
               className="group flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-5 transition-all duration-300 hover:border-indigo-500/30 hover:bg-indigo-500/[0.04]"
             >
 
+
               <div className="flex items-center gap-4">
 
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 font-semibold text-white shadow-lg shadow-indigo-500/30">
-                  {appointment.patients?.name?.charAt(0)}
+
+                  {appointment.patients?.[0]?.name?.charAt(0) ?? "?"}
+
                 </div>
+
+
 
                 <div>
 
+
                   <h3 className="text-base font-semibold text-white">
-                    {appointment.patients?.name}
+
+                    {appointment.patients?.[0]?.name ?? "Unknown Patient"}
+
                   </h3>
 
+
+
                   <div className="mt-1 flex items-center gap-2 text-sm text-zinc-400">
+
                     <Stethoscope className="h-4 w-4 text-indigo-400" />
-                    {appointment.doctors?.name}
+
+                    Dr. {appointment.doctors?.[0]?.name ?? "Unknown Doctor"}
+
                   </div>
+
+
 
                   <div className="mt-3 flex flex-wrap gap-2">
 
-                    <span className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
-                      <CalendarDays className="h-3.5 w-3.5" />
-                      {formatDate(appointment.appointment_date)}
-                    </span>
 
                     <span className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
-                      <Clock3 className="h-3.5 w-3.5" />
-                      {formatTime(appointment.appointment_time)}
+
+                      <CalendarDays className="h-3.5 w-3.5" />
+
+                      {formatDate(
+                        appointment.appointment_date
+                      )}
+
                     </span>
+
+
+
+                    <span className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
+
+                      <Clock3 className="h-3.5 w-3.5" />
+
+                      {formatTime(
+                        appointment.appointment_time
+                      )}
+
+                    </span>
+
 
                   </div>
 
+
                 </div>
+
 
               </div>
 
-              <Badge className={getStatusStyle(appointment.status)}>
+
+
+              <Badge
+                className={getStatusStyle(
+                  appointment.status
+                )}
+              >
+
                 {appointment.status}
+
               </Badge>
 
+
             </div>
+
           ))
+
         ) : (
+
           <div className="flex h-56 items-center justify-center rounded-2xl border border-dashed border-zinc-700 text-zinc-500">
+
             No recent appointments
+
           </div>
+
         )}
 
+
       </CardContent>
+
 
     </Card>
   );
