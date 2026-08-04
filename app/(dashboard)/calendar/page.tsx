@@ -42,15 +42,13 @@ export default async function CalendarPage() {
 
   const appointmentList = appointments ?? [];
 
-  const confirmed =
-    appointmentList.filter(
-      (a) => a.status === "Confirmed"
-    ).length;
+  const confirmed = appointmentList.filter(
+    (a) => a.status === "Confirmed"
+  ).length;
 
-  const scheduled =
-    appointmentList.filter(
-      (a) => a.status === "Scheduled"
-    ).length;
+  const scheduled = appointmentList.filter(
+    (a) => a.status === "Scheduled"
+  ).length;
 
   return (
     <div className="space-y-8">
@@ -79,65 +77,57 @@ export default async function CalendarPage() {
 
       {/* Statistics */}
 
-		<div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3">
 
-		  <div className="group rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 transition-all duration-300 hover:border-indigo-500/40 hover:shadow-xl hover:shadow-indigo-500/10">
+        <div className="group rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 transition-all duration-300 hover:border-indigo-500/40 hover:shadow-xl hover:shadow-indigo-500/10">
 
-			<p className="text-sm font-medium text-zinc-400">
-			  Total Appointments
-			</p>
+          <p className="text-sm font-medium text-zinc-400">
+            Total Appointments
+          </p>
 
-			<h2 className="mt-3 text-4xl font-bold text-white">
-			  {appointments.length}
-			</h2>
+          <h2 className="mt-3 text-4xl font-bold text-white">
+            {appointmentList.length}
+          </h2>
 
-			<p className="mt-2 text-sm text-zinc-500">
-			  All appointments
-			</p>
+          <p className="mt-2 text-sm text-zinc-500">
+            All appointments
+          </p>
 
-		  </div>
+        </div>
 
-		  <div className="group rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 transition-all duration-300 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/10">
+        <div className="group rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 transition-all duration-300 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/10">
 
-			<p className="text-sm font-medium text-zinc-400">
-			  Confirmed
-			</p>
+          <p className="text-sm font-medium text-zinc-400">
+            Confirmed
+          </p>
 
-			<h2 className="mt-3 text-4xl font-bold text-emerald-400">
-			  {
-				appointments.filter(
-				  (a) => a.status === "Confirmed"
-				).length
-			  }
-			</h2>
+          <h2 className="mt-3 text-4xl font-bold text-emerald-400">
+            {confirmed}
+          </h2>
 
-			<p className="mt-2 text-sm text-zinc-500">
-			  Ready for consultation
-			</p>
+          <p className="mt-2 text-sm text-zinc-500">
+            Ready for consultation
+          </p>
 
-		  </div>
+        </div>
 
-		  <div className="group rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 transition-all duration-300 hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/10">
+        <div className="group rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 transition-all duration-300 hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/10">
 
-			<p className="text-sm font-medium text-zinc-400">
-			  Scheduled
-			</p>
+          <p className="text-sm font-medium text-zinc-400">
+            Scheduled
+          </p>
 
-			<h2 className="mt-3 text-4xl font-bold text-blue-400">
-			  {
-				appointments.filter(
-				  (a) => a.status === "Scheduled"
-				).length
-			  }
-			</h2>
+          <h2 className="mt-3 text-4xl font-bold text-blue-400">
+            {scheduled}
+          </h2>
 
-			<p className="mt-2 text-sm text-zinc-500">
-			  Waiting confirmation
-			</p>
+          <p className="mt-2 text-sm text-zinc-500">
+            Waiting confirmation
+          </p>
 
-		  </div>
+        </div>
 
-		</div>
+      </div>
 
       {/* Calendar */}
 
